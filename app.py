@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+import os
+import time
 
 st.title("Cadastro de Produtos")
 
@@ -23,11 +25,25 @@ try:
     total_valor = (df["Valor"] * df["Quantidade"]).sum()
     st.markdown(f'Soma total dos valores dos produtos: <span style="color:green"> R$ {total_valor}</span>', unsafe_allow_html=True)
 except FileNotFoundError:
-    st.write("Nenhum produto cadastrado ainda.")
+    df = pd.DataFrame(columns=["Nome","Valor", "Quantidade", "Estado"])
 
 
-try:
+if not df.empty:
     st.write("Produtos cadastrados: ")
     st.dataframe(df)
-except NameError:
-    st.write("N/A")
+    st.write("-------")
+else:
+    st.write("Nenhum produto cadastrado ainda.")
+    st.write("-------")
+
+limpar = st.button("Limpar Cadastro")
+
+if limpar:
+    if os.path.exists("Produtos.csv"):
+        os.remove("Produtos.csv")
+        sucess_placeholder = st.empty()
+        sucess_placeholder.warning("Atualizando Cadastro...")
+        time.sleep(1)
+        st.rerun()
+    else:
+        st.warning("Nenhum cadastro encontrado para limpar.")
