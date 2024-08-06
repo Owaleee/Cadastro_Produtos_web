@@ -77,6 +77,10 @@ else:
 
 # Botão para limpar o cadastro
 if st.button("Limpar Cadastro"):
+    progress_bar = st.progress(0)
+    for percent_complete in range(100):
+        time.sleep(0.007)
+        progress_bar.progress(percent_complete +1)
     if limpar_cadastro():
         st.warning("Cadastro limpo com sucesso. Atualizando...")
         time.sleep(0.20)
