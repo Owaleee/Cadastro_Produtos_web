@@ -4,38 +4,45 @@ import pandas as pd
 import os
 import time
 
-# Título da aplicação
+def carregar_dados():
+    try:
+        return pd.read_csv("Produtos.csv", header=None, names=["Nome", "Valor", "Quantidade", "Estado"])
+    except FileNotFoundError:
+        return pd.DataFrame(columns=["Nome", "Valor", "Quantidade", "Estado"])
+    
+def salvar_dados(nome, valor, quantdade, estado):
+    with open("Produtos.csv", "a", encoding="utf8") as arquivo:
+        arquivo.write(f"{nome}, {valor}, {quantdade}, {estado}\n")
+
+def calcular_valor_total(df):
+    return(df["Valor"] * df["Quantidade"]).sum()
+
+def limpar_cadastro():
+    if os.path.exists("Produtos.csv"):
+        os.remove("Produtos.csv")
+        return True
+    return False
 st.title("Cadastro de Produtos")
 
-# Campos de entrada para os dados do produto
 nome_produto = st.text_input("Nome do Produto")
-valor_produto = st.number_input("Valor do Produto (R$)")
+valor_produto = st.number_input("Valor do Produto (R$)", min_value=0.01, step=0.01)
 qtd_produto = st.number_input("Quantidade", step=1, value=1, min_value=1, format="%d")
 estd_conservacao = st.selectbox("Estado de Conservação", ["Novo", "Usado"])
 
-# Botão para cadastrar o produto
-cadastrar = st.button("Cadastrar Produto")
-
-# Verificação e cadastro do produto
-if cadastrar:
-    if valor_produto <= 0:
+if st.button("Cadastrar Produto"):
+    if not nome_produto:
+        st.error("O nome do produto é obrigatório.")
+    elif valor_produto <= 0:
         st.error("O valor do produto deve ser maior que 0.")
     else:
-        with open("Produtos.csv", "a", encoding="utf8") as arquivo:
-            arquivo.write(f"{nome_produto},{valor_produto},{qtd_produto},{estd_conservacao}\n")
-            st.success("Produto cadastrado com sucesso!")
+        salvar_dados(nome_produto, valor_produto, qtd_produto, estd_conservacao)
+        st.success("Produto cadastrado com sucesso!")
 
-# Leitura e processamento do arquivo CSV
-try:
-    df = pd.read_csv("Produtos.csv", header=None, names=["Nome", "Valor", "Quantidade", "Estado"])
-    # Cálculo do valor total dos produtos
-    total_valor = (df["Valor"] * df["Quantidade"]).sum()
-    st.markdown(f'Soma total dos valores dos produtos: <span style="color:green">R$ {total_valor}</span>', unsafe_allow_html=True)
-except FileNotFoundError:
-    # Criação de um DataFrame vazio se o arquivo não existir
-    df = pd.DataFrame(columns=["Nome", "Valor", "Quantidade", "Estado"])
+df = carregar_dados()
 
-# Exibição dos produtos cadastrados
+total_valor = calcular_valor_total(df)
+st.markdown(f'Soma total dos valores dos produtos <span style="color:green">R${total_valor:.2F}</span>', unsafe_allow_html=True)
+
 if not df.empty:
     st.write("Produtos cadastrados:")
     st.dataframe(df)
@@ -44,17 +51,10 @@ else:
     st.write("Nenhum produto cadastrado ainda.")
     st.write("-------")
 
-# Botão para limpar o cadastro
-limpar = st.button("Limpar Cadastro")
-
-# Lógica para limpar o arquivo CSV e atualizar a página
-if limpar:
-    if os.path.exists("Produtos.csv"):
-        os.remove("Produtos.csv")
-        # Mensagem de atualização e timer
-        sucesso_placeholder = st.empty()
-        sucesso_placeholder.warning("Atualizando Cadastro...")
+if st.button("Limpar Cadastro"):
+    if limpar_cadastro():
+        st.warning("Cadastro limpo com sucesso. Atualizando...")
         time.sleep(1)
         st.rerun()
     else:
-        st.warning("Nenhum cadastro encontrado para limpar.")
+        st.warning("Nunhum cadastro encontrado para limpar.")
